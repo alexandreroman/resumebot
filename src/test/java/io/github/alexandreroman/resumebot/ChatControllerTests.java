@@ -109,6 +109,23 @@ class ChatControllerTests {
         assertThat(eval.matches).isTrue();
     }
 
+    @Test
+    void evaluateChatAnswerWithMarkdown() {
+        final var resp = client.postForEntity("/chat", new ChatRequest("How do I get in touch with you?"), String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        final var answer = resp.getBody();
+        assertThat(answer).isNotBlank();
+
+        final var chatClient = chatClientBuilder.build();
+        final var eval = chatClient.prompt().user(p -> p.text("""
+                Evaluate the following answer (enclosed with the <answer> tag):
+                <answer>{answer}</answer>
+                
+                Check that this answer includes a link to a GitHub profile, using Markdown formatting.
+                """).param("answer", answer)).call().entity(EvaluationResult.class);
+        assertThat(eval.matches).isTrue();
+    }
+
     private record ChatRequest(String question, String conversationId) {
         ChatRequest(String question, String conversationId) {
             this.question = question;
