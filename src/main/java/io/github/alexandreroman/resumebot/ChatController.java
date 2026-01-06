@@ -96,7 +96,7 @@ class ChatController {
     }
 
     private record ChatResponse(
-            @JsonPropertyDescription("Answer to the question, may default to a generic answer if the resume is missing data")
+            @JsonPropertyDescription("Answer to the question in Markdown, may default to a generic answer if the resume is missing data")
             String answer,
             @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data")
             boolean foundAnswer
