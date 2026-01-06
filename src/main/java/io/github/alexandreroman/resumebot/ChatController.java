@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,7 @@ class ChatController {
     }
 
     @PostMapping(value = "/chat", produces = MediaType.TEXT_MARKDOWN_VALUE)
+    @RegisterReflectionForBinding(ChatResponse.class)
     String chat(@RequestBody ChatRequest req) {
         if (req.question == null) {
             throw new IllegalArgumentException("Input question cannot be null");
