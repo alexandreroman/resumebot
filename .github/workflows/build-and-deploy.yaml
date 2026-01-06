@@ -33,13 +33,12 @@ jobs:
       env:
         SPRING_AI_OPENAI_API_KEY: ${{ secrets.OPENAI_KEY }}
       run: |
-        chmod +x ./mvnw
-        ./mvnw -B test
+        mvn -B test
     - name: Get image name
       id: image
       run: |
         sudo apt-get install -y libxml2-utils
-        ./mvnw -q -B help:effective-pom -Doutput=pom-effective.xml
+        mvn -q -B help:effective-pom -Doutput=pom-effective.xml
         CNB_IMAGE=`xmllint --xpath "//*[local-name()='execution']//*[local-name()='image']/*[local-name()='name']/text()" pom-effective.xml`
         echo "name=$CNB_IMAGE" >> "$GITHUB_OUTPUT"
 
@@ -70,8 +69,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build image
       run: |
-        chmod +x ./mvnw
-        ./mvnw -Pnative -DskipTests -B spring-boot:build-image
+        mvn -Pnative -DskipTests -B spring-boot:build-image
     - name: Deploy image
       run: |
         CNB_TAG="linux-`dpkg --print-architecture`"
