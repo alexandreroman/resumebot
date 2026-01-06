@@ -16,6 +16,7 @@
 
 package io.github.alexandreroman.resumebot;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -61,6 +62,7 @@ class ChatController {
         final var resp = chatClient.prompt()
                 .system(config.systemPrompt())
                 .user(p -> p.text(config.userPrompt())
+                        .param("resume", config.resume())
                         .param("question", question)
                         .param("conversation", getConversationHistory(conversationId)))
                 .call()
@@ -71,14 +73,14 @@ class ChatController {
         if (!resp.foundAnswer) {
             logger.info("No answer found for question [{}] from conversation {}", question, cid);
         } else {
-            logger.info("Found answer for question [{}] from conversation {}: {}", question, cid, resp.output);
+            logger.info("Found answer for question [{}] from conversation {}: {}", question, cid, resp.answer);
 
             if (conversationId != null) {
                 messageService.addMessage(conversationId, MessageType.USER, question);
-                messageService.addMessage(conversationId, MessageType.ASSISTANT, resp.output);
+                messageService.addMessage(conversationId, MessageType.ASSISTANT, resp.answer);
             }
         }
-        return resp.output;
+        return resp.answer;
     }
 
     private String getConversationHistory(String conversationId) {
@@ -93,6 +95,11 @@ class ChatController {
     private record ChatRequest(String question, String conversationId) {
     }
 
-    private record ChatResponse(String output, boolean foundAnswer) {
+    private record ChatResponse(
+            @JsonPropertyDescription("Answer to the question, may default to a generic answer if the resume is missing data")
+            String answer,
+            @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data")
+            boolean foundAnswer
+    ) {
     }
 }

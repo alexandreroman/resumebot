@@ -21,6 +21,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app")
 record AppConfig(
         String systemPrompt,
-        String userPrompt
+        String userPrompt,
+        String resume
 ) {
 }

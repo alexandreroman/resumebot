@@ -57,7 +57,7 @@ app:
   userPrompt: |
     Here is the CV data to analyze:
     <cv_data>
-    ${app.resume}
+    {resume}
     </cv_data>
     
     Here are the past messages from this conversation (enclosed by the <conversation> tag):
