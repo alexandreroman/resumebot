@@ -29,8 +29,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.stream.Collectors;
-
 @RestController
 class ChatController {
     private final Logger logger = LoggerFactory.getLogger(ChatController.class);
@@ -51,7 +49,7 @@ class ChatController {
             throw new IllegalArgumentException("Input question cannot be null");
         }
         final var q = req.question.trim();
-        if (q.length() == 0) {
+        if (q.isEmpty()) {
             throw new IllegalArgumentException("Input question cannot be empty");
         }
         return processQuestion(req.conversationId, q);
@@ -59,7 +57,7 @@ class ChatController {
 
     private String processQuestion(String conversationId, String question) {
         final var cid = conversationId == null ? "<none>" : conversationId;
-        logger.debug("Processing question [{}] from conversation {}", question, cid);
+        logger.info("Processing question [{}] from conversation {}", question, cid);
         final var resp = chatClient.prompt()
                 .system(config.systemPrompt())
                 .user(p -> p.text(config.userPrompt())
@@ -67,10 +65,13 @@ class ChatController {
                         .param("conversation", getConversationHistory(conversationId)))
                 .call()
                 .entity(ChatResponse.class);
+        if (resp == null) {
+            throw new IllegalStateException("No response from AI after asking [" + question + "] in conversation " + cid);
+        }
         if (!resp.foundAnswer) {
             logger.info("No answer found for question [{}] from conversation {}", question, cid);
         } else {
-            logger.debug("Found answer for question [{}] from conversation {}: {}", question, cid, resp.output);
+            logger.info("Found answer for question [{}] from conversation {}: {}", question, cid, resp.output);
 
             if (conversationId != null) {
                 messageService.addMessage(conversationId, MessageType.USER, question);
@@ -81,7 +82,7 @@ class ChatController {
     }
 
     private String getConversationHistory(String conversationId) {
-        return messageService.getMessages(conversationId).stream().collect(Collectors.joining("\n"));
+        return String.join("\n", messageService.getMessages(conversationId));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
