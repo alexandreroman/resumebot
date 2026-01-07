@@ -5,8 +5,9 @@ spring:
     openai:
       chat:
         options:
-          model: gpt-5-nano
+          model: gpt-4.1-mini
           temperature: 1
+          maxTokens: 1000
 
 server:
   port: ${PORT:8080}
