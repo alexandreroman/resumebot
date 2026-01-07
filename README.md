@@ -10,6 +10,25 @@ Resume Bot is a Spring Boot application that leverages Artificial Intelligence t
 *   **Observability**: Integrates Spring Boot Actuator and Micrometer (OTLP) for monitoring.
 *   **Containerization**: Docker and Kubernetes ready with Cloud Native Buildpacks support.
 
+## Architecture
+
+```mermaid
+graph TD
+    User([User]) -->|Interacts with| Frontend[Web Frontend]
+    Frontend -->|POST /chat| Backend[Spring Boot Backend]
+
+    subgraph "Backend Application"
+        Backend --> Controller[ChatController]
+        Controller -->|Read/Write History| Service[MessageService]
+        Controller -->|Generate Answer| AI[Spring AI ChatClient]
+        Service -->|Persist| Redis[(Redis)]
+
+        Config[application.yaml] -.->|Resume Data| Controller
+    end
+
+    AI -->|API Call| OpenAI([OpenAI API])
+```
+
 ## Prerequisites
 
 *   **Java 25** (or compatible version configured in `pom.xml`)
