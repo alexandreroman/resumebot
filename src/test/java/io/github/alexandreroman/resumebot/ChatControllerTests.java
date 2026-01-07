@@ -30,7 +30,7 @@ import org.testcontainers.junit.jupiter.Container;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles(profiles = {"tests", "dev"})
+@ActiveProfiles(profiles = {"test", "dev"})
 class ChatControllerTests {
     @Container
     @ServiceConnection
