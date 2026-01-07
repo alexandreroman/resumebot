@@ -48,46 +48,47 @@ class ChatController {
 
     @PostMapping(value = "/chat", produces = MediaType.TEXT_MARKDOWN_VALUE)
     @RegisterReflectionForBinding(ChatResponse.class)
-    String chat(@RequestParam("question") String question,
+    String chat(@RequestParam("prompt") String prompt,
                 @RequestParam(value = "conversationId", required = false) String conversationId) {
-        if (question == null) {
-            throw new IllegalArgumentException("Input question cannot be null");
+        if (prompt == null) {
+            throw new IllegalArgumentException("Input prompt cannot be null");
         }
-        final var q = question.trim();
-        if (q.isEmpty()) {
-            throw new IllegalArgumentException("Input question cannot be empty");
+        final var p = prompt.trim();
+        if (p.isEmpty()) {
+            throw new IllegalArgumentException("Input prompt cannot be empty");
         }
-        return processQuestion(conversationId, q);
+        return processPrompt(conversationId, p);
     }
 
-    private String processQuestion(String conversationId, String question) {
+    private String processPrompt(String conversationId, String prompt) {
         final var cid = conversationId == null ? "<none>" : conversationId;
-        logger.info("Processing question [{}] from conversation {}", question, cid);
+        logger.info("Processing prompt [{}] from conversation {}", prompt, cid);
 
         final var outputConverter = new BeanOutputConverter<ChatResponse>(ChatResponse.class);
         final var jsonSchema = outputConverter.getJsonSchema();
 
-        // Use OpenAiChatOptions to enforce the use of JSON for output (following the JSON schema).
+        // Use OpenAiChatOptions to enforce the use of JSON for output (following the
+        // JSON schema).
         final var strResp = chatClient.prompt()
                 .system(config.systemPrompt())
-                .user(p -> p.text(config.userPrompt())
+                .user(u -> u.text(config.userPrompt())
                         .param("resume", config.resume())
-                        .param("question", question)
+                        .param("prompt", prompt)
                         .param("conversation", getConversationHistory(conversationId)))
                 .options(OpenAiChatOptions.builder().outputSchema(jsonSchema).build())
                 .call().content();
         if (strResp == null) {
             throw new IllegalStateException(
-                    "No response from AI after asking [" + question + "] in conversation " + cid);
+                    "No response from AI after asking [" + prompt + "] in conversation " + cid);
         }
         final var resp = outputConverter.convert(strResp);
         if (!resp.foundAnswer) {
-            logger.info("No answer found for question [{}] from conversation {}", question, cid);
+            logger.info("No answer found for prompt [{}] from conversation {}", prompt, cid);
         } else {
-            logger.info("Found answer for question [{}] from conversation {}: {}", question, cid, resp.answer);
+            logger.info("Found answer for prompt [{}] from conversation {}: {}", prompt, cid, resp.answer);
 
             if (conversationId != null) {
-                messageService.addMessage(conversationId, MessageType.USER, question);
+                messageService.addMessage(conversationId, MessageType.USER, prompt);
                 messageService.addMessage(conversationId, MessageType.ASSISTANT, resp.answer);
             }
         }
@@ -104,9 +105,7 @@ class ChatController {
     }
 
     private record ChatResponse(
-            @JsonProperty(value = "answer", required = true)
-            @JsonPropertyDescription("Answer to the question in Markdown, may default to a generic answer if the resume is missing data") String answer,
-            @JsonProperty(value = "foundAnswer", required = true)
-            @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data") boolean foundAnswer) {
+            @JsonProperty(value = "answer", required = true) @JsonPropertyDescription("Answer to the question in Markdown, may default to a generic answer if the resume is missing data") String answer,
+            @JsonProperty(value = "foundAnswer", required = true) @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data") boolean foundAnswer) {
     }
 }

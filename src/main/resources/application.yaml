@@ -67,4 +67,4 @@ app:
   
     Reminder: Answer based only on the data above.
   
-    Question: {question}
+    Question: {prompt}
