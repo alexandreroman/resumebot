@@ -27,7 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -45,15 +45,16 @@ class ChatController {
 
     @PostMapping(value = "/chat", produces = MediaType.TEXT_MARKDOWN_VALUE)
     @RegisterReflectionForBinding(ChatResponse.class)
-    String chat(@RequestBody ChatRequest req) {
-        if (req.question == null) {
+    String chat(@RequestParam("question") String question,
+                @RequestParam(value = "conversationId", required = false) String conversationId) {
+        if (question == null) {
             throw new IllegalArgumentException("Input question cannot be null");
         }
-        final var q = req.question.trim();
+        final var q = question.trim();
         if (q.isEmpty()) {
             throw new IllegalArgumentException("Input question cannot be empty");
         }
-        return processQuestion(req.conversationId, q);
+        return processQuestion(conversationId, q);
     }
 
     private String processQuestion(String conversationId, String question) {
@@ -68,7 +69,8 @@ class ChatController {
                 .call()
                 .entity(ChatResponse.class);
         if (resp == null) {
-            throw new IllegalStateException("No response from AI after asking [" + question + "] in conversation " + cid);
+            throw new IllegalStateException(
+                    "No response from AI after asking [" + question + "] in conversation " + cid);
         }
         if (!resp.foundAnswer) {
             logger.info("No answer found for question [{}] from conversation {}", question, cid);
@@ -92,14 +94,8 @@ class ChatController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
     }
 
-    private record ChatRequest(String question, String conversationId) {
-    }
-
     private record ChatResponse(
-            @JsonPropertyDescription("Answer to the question in Markdown, may default to a generic answer if the resume is missing data")
-            String answer,
-            @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data")
-            boolean foundAnswer
-    ) {
+            @JsonPropertyDescription("Answer to the question in Markdown, may default to a generic answer if the resume is missing data") String answer,
+            @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data") boolean foundAnswer) {
     }
 }
