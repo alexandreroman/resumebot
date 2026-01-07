@@ -56,17 +56,18 @@ The application exposes a REST API to interact with the bot.
 
 ```bash
 curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "What is your experience with Java?",
-    "conversationId": "12345"
-  }'
+  -d "question=What is your experience with Java?" \
+  -d "conversationId=12345"
 ```
 
 ### Parameters
 
 *   `question` (Required): The question to ask the bot.
 *   `conversationId` (Optional): A unique identifier to maintain conversation context.
+
+### Response
+
+The response is a plain text string (Markdown formatted) containing the answer.
 
 ## Technologies
 
