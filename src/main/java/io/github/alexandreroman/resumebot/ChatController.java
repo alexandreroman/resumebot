@@ -16,11 +16,14 @@
 
 package io.github.alexandreroman.resumebot;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -60,18 +63,24 @@ class ChatController {
     private String processQuestion(String conversationId, String question) {
         final var cid = conversationId == null ? "<none>" : conversationId;
         logger.info("Processing question [{}] from conversation {}", question, cid);
-        final var resp = chatClient.prompt()
+
+        final var outputConverter = new BeanOutputConverter<ChatResponse>(ChatResponse.class);
+        final var jsonSchema = outputConverter.getJsonSchema();
+
+        // Use OpenAiChatOptions to enforce the use of JSON for output (following the JSON schema).
+        final var strResp = chatClient.prompt()
                 .system(config.systemPrompt())
                 .user(p -> p.text(config.userPrompt())
                         .param("resume", config.resume())
                         .param("question", question)
                         .param("conversation", getConversationHistory(conversationId)))
-                .call()
-                .entity(ChatResponse.class);
-        if (resp == null) {
+                .options(OpenAiChatOptions.builder().outputSchema(jsonSchema).build())
+                .call().content();
+        if (strResp == null) {
             throw new IllegalStateException(
                     "No response from AI after asking [" + question + "] in conversation " + cid);
         }
+        final var resp = outputConverter.convert(strResp);
         if (!resp.foundAnswer) {
             logger.info("No answer found for question [{}] from conversation {}", question, cid);
         } else {
@@ -95,7 +104,9 @@ class ChatController {
     }
 
     private record ChatResponse(
+            @JsonProperty(value = "answer", required = true)
             @JsonPropertyDescription("Answer to the question in Markdown, may default to a generic answer if the resume is missing data") String answer,
+            @JsonProperty(value = "foundAnswer", required = true)
             @JsonPropertyDescription("Set to true if the answer was found in the resume, otherwise set to false if the resume is missing data") boolean foundAnswer) {
     }
 }
