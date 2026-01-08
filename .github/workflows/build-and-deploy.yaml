@@ -6,11 +6,13 @@ on:
     - main
     paths-ignore:
     - 'README.md'
+    - 'tools/**'
   pull_request:
     branches:
     - main
     paths-ignore:
     - 'README.md'
+    - 'tools/**'
 
 concurrency:
   group: ${{ github.workflow }}

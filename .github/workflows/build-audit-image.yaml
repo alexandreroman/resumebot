@@ -1,0 +1,43 @@
+name: Build audit image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/audit/**'
+      - '.github/workflows/build-audit-image.yaml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tools/audit/**'
+      - '.github/workflows/build-audit-image.yaml'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Log in to the container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: tools/audit
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/alexandreroman/resumebot-audit:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
