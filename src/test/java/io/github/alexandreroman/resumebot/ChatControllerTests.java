@@ -28,10 +28,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.util.LinkedMultiValueMap;
 import org.testcontainers.junit.jupiter.Container;
 
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles(profiles = { "test", "dev" })
+@ActiveProfiles(profiles = {"test", "dev"})
 class ChatControllerTests {
     @Container
     @ServiceConnection
@@ -69,7 +73,7 @@ class ChatControllerTests {
         final var eval = chatClient.prompt().user(p -> p.text("""
                 Evaluate the following answer (enclosed with the <answer> tag):
                 <answer>{answer}</answer>
-
+                
                 Check that this answer mentions this location: "Paris, France".
                 """).param("answer", answer)).call().entity(EvaluationResult.class);
         assertThat(eval.matches).isTrue();
@@ -96,7 +100,7 @@ class ChatControllerTests {
         final var eval = chatClient.prompt().user(p -> p.text("""
                 Evaluate the following answer (enclosed with the <answer> tag):
                 <answer>{answer}</answer>
-
+                
                 Check that this answer confirms that the city is located in France.
                 """).param("answer", answer)).call().entity(EvaluationResult.class);
         assertThat(eval.matches).isTrue();
@@ -115,7 +119,7 @@ class ChatControllerTests {
         final var eval = chatClient.prompt().user(p -> p.text("""
                 Evaluate the following answer (enclosed with the <answer> tag):
                 <answer>{answer}</answer>
-
+                
                 Check that this answer does not include a joke.
                 """).param("answer", answer)).call().entity(EvaluationResult.class);
         assertThat(eval.matches).isTrue();
@@ -134,10 +138,46 @@ class ChatControllerTests {
         final var eval = chatClient.prompt().user(p -> p.text("""
                 Evaluate the following answer (enclosed with the <answer> tag):
                 <answer>{answer}</answer>
-
+                
                 Check that this answer includes a link to a GitHub profile, using Markdown formatting.
                 """).param("answer", answer)).call().entity(EvaluationResult.class);
         assertThat(eval.matches).isTrue();
+    }
+
+    @Test
+    void toolToday() {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("prompt", "What's the today's date?");
+        final var resp = client.postForEntity("/chat", params, String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        final var answer = resp.getBody();
+        assertThat(answer).isNotBlank();
+
+        final var chatClient = chatClientBuilder.build();
+        final var eval = chatClient.prompt()
+                .user(p -> p.text("""
+                                Evaluate the following answer (enclosed with the <answer> tag):
+                                <answer>{answer}</answer>
+                                
+                                Check that this answer closely matches this date in ISO-8601: {date}.
+                                """)
+                        .param("answer", answer)
+                        .param("date", DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now())))
+                .call().entity(EvaluationResult.class);
+        assertThat(eval.matches).isTrue();
+    }
+
+    @Test
+    void toolCurrentYear() {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("prompt", "What's the current year?");
+        final var resp = client.postForEntity("/chat", params, String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        final var answer = resp.getBody();
+        assertThat(answer).isNotBlank();
+
+        final int year = Year.now().getValue();
+        assertThat(answer).contains(String.valueOf(year));
     }
 
     private record EvaluationResult(boolean matches) {

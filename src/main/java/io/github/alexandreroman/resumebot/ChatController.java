@@ -36,11 +36,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 class ChatController {
     private final Logger logger = LoggerFactory.getLogger(ChatController.class);
+    private final ChatTools tools;
     private final MessageService messageService;
     private final ChatClient chatClient;
     private final AppConfig config;
 
-    ChatController(MessageService messageService, ChatClient.Builder chatClientBuilder, AppConfig config) {
+    ChatController(ChatTools tools, MessageService messageService, ChatClient.Builder chatClientBuilder, AppConfig config) {
+        this.tools = tools;
         this.messageService = messageService;
         this.chatClient = chatClientBuilder.build();
         this.config = config;
@@ -75,6 +77,7 @@ class ChatController {
                         .param("resume", config.resume())
                         .param("prompt", prompt)
                         .param("conversation", getConversationHistory(conversationId)))
+                .tools(tools)
                 .options(OpenAiChatOptions.builder().outputSchema(jsonSchema).build())
                 .call().content();
         if (strResp == null) {
