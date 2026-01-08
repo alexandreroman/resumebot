@@ -67,6 +67,7 @@ def main():
     # Using the order in which keys were scanned
     for conv_id, msgs in conversations.items():
         print(f"Conversation: {conv_id}")
+        print()
         for msg in msgs:
             print(f"{msg}")
         print("-" * 20)
