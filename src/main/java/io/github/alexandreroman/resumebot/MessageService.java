@@ -46,7 +46,7 @@ class MessageService {
         final var key = getMessagesKey(conversationId);
         final var m = (messageType.equals(MessageType.USER) ? "Q: " : "A: ") + message;
         logger.debug("Adding message to conversation {}: {}", conversationId, m);
-        redis.opsForList().rightPush(key, message);
+        redis.opsForList().rightPush(key, m);
         redis.expire(key, 1, TimeUnit.DAYS);
     }
 
