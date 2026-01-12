@@ -20,10 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -66,25 +65,20 @@ class ChatController {
         final var cid = conversationId == null ? "<none>" : conversationId;
         logger.info("Processing prompt [{}] from conversation {}", prompt, cid);
 
-        final var outputConverter = new BeanOutputConverter<ChatResponse>(ChatResponse.class);
-        final var jsonSchema = outputConverter.getJsonSchema();
-
-        // Use OpenAiChatOptions to enforce the use of JSON for output (following the
-        // JSON schema).
-        final var strResp = chatClient.prompt()
+        final var resp = chatClient.prompt()
                 .system(config.systemPrompt())
                 .user(u -> u.text(config.userPrompt())
                         .param("resume", config.resume())
                         .param("prompt", prompt)
                         .param("conversation", getConversationHistory(conversationId)))
                 .tools(tools)
-                .options(OpenAiChatOptions.builder().outputSchema(jsonSchema).build())
-                .call().content();
-        if (strResp == null) {
+                // Enable native structured output, using the JSON schema from the target objet.
+                .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                .call().entity(ChatResponse.class);
+        if (resp == null) {
             throw new IllegalStateException(
                     "No response from AI after asking [" + prompt + "] in conversation " + cid);
         }
-        final var resp = outputConverter.convert(strResp);
         if (!resp.foundAnswer) {
             logger.info("No answer found for prompt [{}] from conversation {}", prompt, cid);
         } else {
