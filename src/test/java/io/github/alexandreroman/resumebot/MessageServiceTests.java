@@ -43,7 +43,7 @@ class MessageServiceTests {
         final var cid = "testfoo";
         deleteConversation(cid);
 
-        final var keyPattern = "resumebot::conversations::" + cid + "::messages";
+        final var keyPattern = "resumebot:conversations:" + cid + ":messages";
         messageService.addMessage(cid, MessageType.USER, "Hello");
         messageService.addMessage(cid, MessageType.ASSISTANT, "Hey");
 
@@ -53,7 +53,7 @@ class MessageServiceTests {
     }
 
     private void deleteConversation(String cid) {
-        final var keys = redisTemplate.keys("resumebot::conversations::*");
+        final var keys = redisTemplate.keys("resumebot:conversations:*");
         if (keys == null) {
             return;
         }

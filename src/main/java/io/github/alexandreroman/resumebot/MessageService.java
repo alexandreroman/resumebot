@@ -35,7 +35,7 @@ class MessageService {
     }
 
     private String getMessagesKey(String conversationId) {
-        return String.format("resumebot::conversations::%s::messages", conversationId);
+        return String.format("resumebot:conversations:%s:messages", conversationId);
     }
 
     void addMessage(String conversationId, MessageType messageType, String message) {
