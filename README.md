@@ -1,5 +1,7 @@
 # Resume Bot
 
+https://github.com/user-attachments/assets/c8101ac6-29aa-4137-b32c-7e13a261d432
+
 Resume Bot is a Spring Boot application that leverages Artificial Intelligence to answer questions regarding a resume. It acts as a virtual assistant representing the candidate, capable of conversing using information extracted from the configured resume.
 
 ## Features
