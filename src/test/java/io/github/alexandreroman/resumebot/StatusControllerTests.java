@@ -16,25 +16,27 @@
 
 package io.github.alexandreroman.resumebot;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class StatusControllerTests {
-    @Autowired
-    private TestRestTemplate client;
+    private RestTestClient client;
+
+    @BeforeEach
+    void setUp(WebApplicationContext context) {
+        client = RestTestClient.bindToApplicationContext(context).build();
+    }
 
     @Test
     void statusOk() {
-        final var resp = client.getForEntity("/status", String.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody()).isEqualTo("OK");
+        final var resp = client.get().uri("/status")
+                .exchangeSuccessfully()
+                .expectBody(String.class).isEqualTo("OK");
     }
 }

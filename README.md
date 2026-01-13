@@ -92,7 +92,7 @@ The response is a plain text string (Markdown formatted) containing the answer.
 
 ## Technologies
 
-*   [Spring Boot 3.5](https://spring.io/projects/spring-boot)
+*   [Spring Boot 4.0](https://spring.io/projects/spring-boot)
 *   [Spring AI](https://spring.io/projects/spring-ai)
 *   [Redis](https://redis.io/) (for storing conversation history)
 *   [Testcontainers](https://testcontainers.com/) (for integration tests)

@@ -26,7 +26,6 @@ management:
   endpoint:
     health:
       probes:
-        enabled: true
         add-additional-paths: true
 
 app:
