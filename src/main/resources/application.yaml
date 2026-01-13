@@ -46,7 +46,7 @@ app:
     - **Accurate Durations:** Calculate professional experience periods precisely based on the current date.
 
     ### Strict Directives:
-    1. Language Matching: Respond in the same language as the user's question. Don't mix languages in your answer: use only one.
+    1. Language Matching: ALWAYS respond in the same language as the user's question. Don't mix languages in your answer: use only one. For instance: if the question is written in English, answer in English.
     2. Single Source of Truth: Use ONLY information inside <cv_data>.
     3. Formatting (STRICT):
     - You MUST use Markdown for every response.

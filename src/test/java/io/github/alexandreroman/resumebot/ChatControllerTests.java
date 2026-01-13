@@ -80,6 +80,25 @@ class ChatControllerTests {
     }
 
     @Test
+    void evaluateChatLanguage() {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("prompt", "Parle moi de toi.");
+        final var resp = client.postForEntity("/chat", params, String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        final var answer = resp.getBody();
+        assertThat(answer).isNotBlank();
+
+        final var chatClient = chatClientBuilder.build();
+        final var eval = chatClient.prompt().user(p -> p.text("""
+                Evaluate the following answer (enclosed with the <answer> tag):
+                <answer>{answer}</answer>
+                
+                Check that this answer is written in French.
+                """).param("answer", answer)).call().entity(EvaluationResult.class);
+        assertThat(eval.matches).isTrue();
+    }
+
+    @Test
     void evaluateChatAnswerWithConversation() {
         final var cid = "foobar";
         final var params = new LinkedMultiValueMap<String, String>();
