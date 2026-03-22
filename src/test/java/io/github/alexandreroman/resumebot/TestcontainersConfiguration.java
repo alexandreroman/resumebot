@@ -16,16 +16,18 @@
 
 package io.github.alexandreroman.resumebot;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
+import com.redis.testcontainers.RedisContainer;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(TestcontainersConfiguration.class)
-class ApplicationTests {
-    @Test
-    void contextLoads() {
+@TestConfiguration(proxyBeanMethods = false)
+class TestcontainersConfiguration {
+    private static final RedisContainer REDIS = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("8.4"));
+
+    @Bean
+    @ServiceConnection
+    RedisContainer redisContainer() {
+        return REDIS;
     }
 }
