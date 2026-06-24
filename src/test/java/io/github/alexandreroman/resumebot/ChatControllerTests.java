@@ -41,6 +41,8 @@ class ChatControllerTests {
 
     @Autowired
     private ChatClient.Builder chatClientBuilder;
+    @Autowired
+    private MessageService messageService;
 
     private RestTestClient client;
 
@@ -129,6 +131,52 @@ class ChatControllerTests {
                 <answer>{answer}</answer>
                 
                 Check that this answer confirms that the city is located in France.
+                """).param("answer", answer)).call().entity(EvaluationResult.class);
+        assertThat(eval.matches).isTrue();
+    }
+
+    @Test
+    void conversationHistoryIsPersistedEvenWhenAnswerNotFound() {
+        // A question with no answer in the CV must still be recorded in the
+        // conversation history, otherwise follow-up questions lose their context.
+        final var cid = "conversation-hole-" + System.nanoTime();
+        assertThat(messageService.getMessages(cid)).isEmpty();
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("prompt", "What is your favorite movie?");
+        params.add("conversationId", cid);
+        client.post().uri("/chat")
+                .body(params)
+                .exchangeSuccessfully();
+
+        // The user question and the assistant answer must both be persisted.
+        assertThat(messageService.getMessages(cid)).hasSize(2);
+    }
+
+    @Test
+    void evaluateChatAnswerAboutTheConversationItself() {
+        final var cid = "conversation-recall-" + System.nanoTime();
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("prompt", "Where are you based in?");
+        params.add("conversationId", cid);
+        client.post().uri("/chat")
+                .body(params)
+                .exchangeSuccessfully();
+
+        params.set("prompt", "What did I just ask you?");
+        final var answer = client.post().uri("/chat")
+                .body(params)
+                .exchangeSuccessfully()
+                .returnResult(String.class).getResponseBody();
+        assertThat(answer).isNotBlank();
+
+        final var chatClient = chatClientBuilder.build();
+        final var eval = chatClient.prompt().user(p -> p.text("""
+                Evaluate the following answer (enclosed with the <answer> tag):
+                <answer>{answer}</answer>
+
+                Check that this answer recalls that the previous question was about
+                where the candidate is based or located.
                 """).param("answer", answer)).call().entity(EvaluationResult.class);
         assertThat(eval.matches).isTrue();
     }

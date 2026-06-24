@@ -83,11 +83,14 @@ class ChatController {
             logger.info("No answer found for prompt [{}] from conversation {}", prompt, cid);
         } else {
             logger.info("Found answer for prompt [{}] from conversation {}: {}", prompt, cid, resp.answer);
+        }
 
-            if (conversationId != null) {
-                messageService.addMessage(conversationId, MessageType.USER, prompt);
-                messageService.addMessage(conversationId, MessageType.ASSISTANT, resp.answer);
-            }
+        // Persist the exchange regardless of whether the answer was found in the CV:
+        // dropping "not found" turns would leave holes in the history and make
+        // follow-up questions lose their conversation context.
+        if (conversationId != null) {
+            messageService.addMessage(conversationId, MessageType.USER, prompt);
+            messageService.addMessage(conversationId, MessageType.ASSISTANT, resp.answer);
         }
         return resp.answer;
     }
