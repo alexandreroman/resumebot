@@ -49,6 +49,7 @@ jobs:
     - name: Get image name
       id: image
       run: |
+        sudo apt-get update
         sudo apt-get install -y libxml2-utils
         mvn -q -B help:effective-pom -Doutput=pom-effective.xml
         CNB_IMAGE=`xmllint --xpath "//*[local-name()='execution']//*[local-name()='image']/*[local-name()='name']/text()" pom-effective.xml`
